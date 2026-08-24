@@ -1,0 +1,74 @@
+@import "tailwindcss";
+
+:root {
+  --background: #F5F6F8;
+  --surface: #FFFFFF;
+  --surface-sunken: #EEF0F4;
+  --ink: #10172A;
+  --ink-muted: #5B6472;
+  --border: #E1E4EA;
+
+  --navy: #12203D;
+  --navy-soft: #1B2E52;
+  --teal: #17726A;
+  --teal-soft: #E4F2F0;
+  --amber: #C8790E;
+  --amber-soft: #FBF0DC;
+  --red: #C23B22;
+  --red-soft: #FBEAE5;
+
+  --font-display: "Space Grotesk", sans-serif;
+  --font-body: "Inter", sans-serif;
+  --font-mono: "IBM Plex Mono", monospace;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-surface: var(--surface);
+  --color-surface-sunken: var(--surface-sunken);
+  --color-ink: var(--ink);
+  --color-ink-muted: var(--ink-muted);
+  --color-border: var(--border);
+  --color-navy: var(--navy);
+  --color-navy-soft: var(--navy-soft);
+  --color-teal: var(--teal);
+  --color-teal-soft: var(--teal-soft);
+  --color-amber: var(--amber);
+  --color-amber-soft: var(--amber-soft);
+  --color-red: var(--red);
+  --color-red-soft: var(--red-soft);
+  --font-display: var(--font-display);
+  --font-sans: var(--font-body);
+  --font-mono: var(--font-mono);
+}
+
+body {
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-body), sans-serif;
+}
+
+.font-display {
+  font-family: var(--font-display), sans-serif;
+}
+
+.font-mono {
+  font-family: var(--font-mono), monospace;
+}
+
+* {
+  border-color: var(--border);
+}
+
+::selection {
+  background: var(--teal-soft);
+  color: var(--navy);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
