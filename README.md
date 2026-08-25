@@ -64,7 +64,7 @@ Roughly in priority order if this were to keep going:
 
 1. **Authentication and role enforcement** — real login, and actually gating actions by the `users.role` field that already exists in the schema.
 2. **LLM-generated coverage narratives** — swap the templated coverage explanation for a real generation step once retrieval has passed a human review (the retrieval step is the expensive, hard part and is already done).
-3. **Migrate to Postgres for production** — the SQLite driver works well locally but won't persist reliably on serverless platforms like Vercel; `supabase/schema.sql` already mirrors the SQLite schema for this move.
+3. ~~Migrate to Postgres for production~~ — **done.** The app now runs on Postgres (Supabase or any host) everywhere, including local development, rather than SQLite. `supabase/schema.sql` is the single source of truth for the database structure.
 4. **Real historical data + model retraining pipeline** — replace the synthetic training set with actual labeled claims and add a retraining job, rather than a one-time offline training script.
 5. **Deploy the GCP target architecture** — take `/infra`'s Terraform from illustrative to applied, once there's a real cloud budget.
 6. **A drag-and-drop rules builder** — the current rules UI is a form; a visual IF/AND/THEN builder would match the original product vision more closely.
@@ -72,10 +72,22 @@ Roughly in priority order if this were to keep going:
 
 ## Requirements
 
-Node.js 22.5 or newer (uses Node's built-in `node:sqlite` module — no native build toolchain needed on any platform, including Windows, which was a real blocker with the database driver this project used originally; see `docs/02-architecture-decisions.md`).
+- Node.js 22 or newer
+- A Postgres database (Supabase's free tier works well — see `.env.example`)
 
 ## Running it
 
+Create `.env.local` with your database connection string:
+```
+DATABASE_URL=postgresql://postgres:your-password@your-host.supabase.co:5432/postgres
+```
+
+Run `supabase/schema.sql` once against that database — paste it into Supabase's SQL Editor and run it, or:
+```bash
+psql "$DATABASE_URL" -f supabase/schema.sql
+```
+
+Then:
 ```bash
 npm install
 npm run db:seed
@@ -102,7 +114,7 @@ python3 scripts/train_xgb_fraud_model.py
 
 ## Stack
 
-Next.js 16 (TypeScript, App Router), Tailwind, Recharts. Node's built-in SQLite for local persistence. `pdf-parse` for PDF text extraction. XGBoost / scikit-learn / shap (Python) for offline model training.
+Next.js 16 (TypeScript, App Router), Tailwind, Recharts. Postgres (via `pg`) for persistence — this project used SQLite earlier in development (first `better-sqlite3`, then Node's built-in `node:sqlite` after `better-sqlite3` failed to install on Windows), but moved to Postgres everywhere once real, always-on persistence was needed rather than something that only worked on one machine's local disk. `pdf-parse` for PDF text extraction. XGBoost / scikit-learn / shap (Python) for offline model training.
 
 ## Docs
 

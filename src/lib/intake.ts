@@ -1,9 +1,18 @@
+import type { Claim } from "./types";
 import { createClaim, getClaim, getOrganization } from "./repo";
 import { ClaimIntakeSchema } from "./validation";
 import { runIntakePipeline } from "./pipeline";
 
 export type IntakeResult =
-  | { ok: true; claim: ReturnType<typeof createClaim>; fraud: any; coverage: any; actions: string[]; status: string; assignedTo: string | null }
+  | {
+      ok: true;
+      claim: Claim;
+      fraud: any;
+      coverage: any;
+      actions: string[];
+      status: string;
+      assignedTo: string | null;
+    }
   | { ok: false; status: number; error: unknown };
 
 /**
@@ -13,18 +22,18 @@ export type IntakeResult =
  * normalize down to this one function and one pipeline run, rather than
  * four separate hand-rolled code paths that happen to look similar.
  */
-export function handleClaimIntake(rawBody: unknown, source: string): IntakeResult {
+export async function handleClaimIntake(rawBody: unknown, source: string): Promise<IntakeResult> {
   const parsed = ClaimIntakeSchema.safeParse(rawBody);
   if (!parsed.success) {
     return { ok: false, status: 400, error: parsed.error.flatten() };
   }
 
-  const org = getOrganization(parsed.data.organization_id);
+  const org = await getOrganization(parsed.data.organization_id);
   if (!org) {
     return { ok: false, status: 404, error: "Unknown organization_id" };
   }
 
-  const claim = createClaim({
+  const claim = await createClaim({
     ...parsed.data,
     status: "new",
     assigned_to: null,
@@ -32,7 +41,7 @@ export function handleClaimIntake(rawBody: unknown, source: string): IntakeResul
     source,
   });
 
-  const result = runIntakePipeline(claim);
+  const result = await runIntakePipeline(claim);
 
   // Re-fetch rather than patch the in-memory object: the pipeline writes
   // fraud_score, human_review_required, status, and assigned_to as separate
@@ -40,7 +49,7 @@ export function handleClaimIntake(rawBody: unknown, source: string): IntakeResul
   // stale by the time we respond. Caught this exact bug via a manual API
   // test (fraud_score showed null in the response despite a 98% score being
   // stored) — worth leaving this comment so it doesn't regress.
-  const freshClaim = getClaim(claim.id)!;
+  const freshClaim = (await getClaim(claim.id))!;
 
   return {
     ok: true,

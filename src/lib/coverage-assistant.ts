@@ -39,8 +39,8 @@ const SAMPLE_CLAUSES: Record<
   },
 };
 
-export function assessCoverage(claim: Claim): CoverageAssessment {
-  const chunks = listChunksForOrg(claim.organization_id);
+export async function assessCoverage(claim: Claim): Promise<CoverageAssessment> {
+  const chunks = await listChunksForOrg(claim.organization_id);
 
   if (chunks.length > 0) {
     const query = `${claim.claim_type.replace(/_/g, " ")} claim, estimated loss ${claim.estimated_loss}, ${claim.policyholder_name}`;

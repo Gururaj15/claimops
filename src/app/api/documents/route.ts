@@ -6,7 +6,7 @@ import { chunkText, termFrequencies } from "@/lib/retrieval";
 export async function GET(req: NextRequest) {
   const orgId = req.nextUrl.searchParams.get("org");
   if (!orgId) return NextResponse.json({ error: "org query param required" }, { status: 400 });
-  return NextResponse.json({ documents: listDocumentsForOrg(orgId) });
+  return NextResponse.json({ documents: await listDocumentsForOrg(orgId) });
 }
 
 /**
@@ -46,9 +46,9 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "No extractable text found in this PDF (it may be a scanned image without OCR)" }, { status: 422 });
   }
 
-  const docId = addPolicyDocument(orgId, null, file.name, text);
+  const docId = await addPolicyDocument(orgId, null, file.name, text);
   const chunks = chunkText(text);
-  chunks.forEach((chunk, i) => addDocumentChunk(docId, i, chunk, termFrequencies(chunk)));
+  await Promise.all(chunks.map((chunk, i) => addDocumentChunk(docId, i, chunk, termFrequencies(chunk))));
 
   return NextResponse.json(
     { documentId: docId, filename: file.name, chunkCount: chunks.length, extractedChars: text.length },

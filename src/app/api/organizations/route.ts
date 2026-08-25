@@ -3,7 +3,7 @@ import { createOrganization, listOrganizations } from "@/lib/repo";
 import { OrganizationCreateSchema } from "@/lib/validation";
 
 export async function GET() {
-  return NextResponse.json({ organizations: listOrganizations() });
+  return NextResponse.json({ organizations: await listOrganizations() });
 }
 
 export async function POST(req: NextRequest) {
@@ -12,6 +12,6 @@ export async function POST(req: NextRequest) {
   if (!parsed.success) {
     return NextResponse.json({ error: parsed.error.flatten() }, { status: 400 });
   }
-  const org = createOrganization(parsed.data);
+  const org = await createOrganization(parsed.data);
   return NextResponse.json({ organization: org }, { status: 201 });
 }

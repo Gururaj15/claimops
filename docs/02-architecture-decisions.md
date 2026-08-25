@@ -34,7 +34,8 @@ compiled.
   has to be added separately in logit space, discovered by comparing
   JS-computed probabilities against Python's and seeing a constant, systematic
   offset rather than random noise.
-- **Persistence**: SQLite, a real file at `data/claimops.db`. Verified by
+- **Persistence**: Postgres (Supabase or any host), connected via `pg`.
+  Verified by
   approving a claim via `PATCH /api/claims/:id`, re-fetching it in a
   separate `curl` call, and confirming the status held — then restarting
   the dev server entirely and confirming it still held.
@@ -104,6 +105,16 @@ process of finding them is itself the evidence this was actually tested:
    full API test suite (persistence, FNOL intake, rules CRUD, dashboard
    aggregates) against the new driver and confirming identical results.
 
+5. **`supabase/schema.sql` was stale and incomplete.** It was written
+   early on and never updated as `adjusters`, `users`, `policy_documents`,
+   and `document_chunks` tables (plus `fraud_score`, `human_review_required`,
+   and `source` columns on `claims`) were added to the SQLite schema during
+   later development. Anyone who had run the old file against Supabase
+   would have gotten a database missing half its tables. Caught by
+   comparing it line-by-line against the SQLite schema before the Postgres
+   migration, rewritten completely, and verified by running it against a
+   real local Postgres instance before handing it off.
+
 ## What's still a documented stand-in
 
 - **Coverage narrative generation.** Retrieval is real; turning retrieved
@@ -126,13 +137,20 @@ process of finding them is itself the evidence this was actually tested:
   and was never applied against a real cloud account — that requires an
   actual billing decision, not something to simulate.
 
-## Why SQLite locally, Postgres for real deployment
+## Why Postgres now, not SQLite
 
-SQLite gives real, durable, zero-account persistence for local development
-and any long-running Node process. It will not reliably persist on Vercel,
-because Vercel's serverless functions have an ephemeral filesystem. The
-repository layer (`src/lib/repo.ts`) is the only thing that talks to the
-database directly — swapping its internals from `node:sqlite` to
-Supabase Postgres (schema already mirrored in `supabase/schema.sql`) is a
-contained change, not a rewrite, when it's time to deploy with real
-persistence.
+Local development originally used SQLite — first `better-sqlite3`, then
+Node's built-in `node:sqlite` after `better-sqlite3` failed to install on
+a real Windows machine (it needs a native C++ build toolchain; Node's
+built-in module needs none). Both versions worked well locally, but
+SQLite's fundamental limitation is a file on one machine's disk — that
+file doesn't exist on Vercel's serverless containers, so a claim approved
+in the deployed app wouldn't reliably stay approved.
+
+The fix was to move to Postgres everywhere, not just in production. Local
+development and the deployed app both now talk to the same kind of
+database (a free Supabase Postgres instance works for either), so there's
+one code path and one set of behaviors to reason about, rather than two
+databases with subtly different guarantees. `src/lib/repo.ts` is written
+against the `pg` driver with `$1`-style parameterized queries;
+`supabase/schema.sql` is the single source of truth for table structure.

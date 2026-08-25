@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
     const record: Record<string, string> = {};
     headers.forEach((h, idx) => (record[h] = cells[idx]));
 
-    const result = handleClaimIntake(record, "csv");
+    const result = await handleClaimIntake(record, "csv");
     if (result.ok) {
       results.push({ row: i, ok: true, claimId: result.claim.id });
     } else {

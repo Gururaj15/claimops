@@ -15,7 +15,7 @@ import { handleClaimIntake } from "@/lib/intake";
  */
 export async function POST(req: NextRequest) {
   const body = await req.json();
-  const result = handleClaimIntake(body, "webhook");
+  const result = await handleClaimIntake(body, "webhook");
   if (!result.ok) return NextResponse.json({ error: result.error }, { status: result.status });
   return NextResponse.json(result, { status: 201 });
 }

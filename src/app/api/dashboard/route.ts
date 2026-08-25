@@ -15,10 +15,10 @@ export async function GET(req: NextRequest) {
   const orgId = req.nextUrl.searchParams.get("org");
   if (!orgId) return NextResponse.json({ error: "org query param required" }, { status: 400 });
 
-  const org = getOrganization(orgId);
+  const org = await getOrganization(orgId);
   if (!org) return NextResponse.json({ error: "Unknown organization" }, { status: 404 });
 
-  const claims = listClaims(orgId);
+  const claims = await listClaims(orgId);
   const now = Date.now();
 
   const rows = claims.map((c) => {
