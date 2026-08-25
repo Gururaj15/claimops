@@ -86,10 +86,23 @@ process of finding them is itself the evidence this was actually tested:
    worker couldn't resolve its own worker file inside Next's bundled
    output (`Cannot find module .../pdf.worker.mjs`) — a real bundler
    incompatibility with a package that does its own dynamic module
-   resolution at runtime, not a typo. Fixed by adding `pdf-parse` and
-   `better-sqlite3` to `serverExternalPackages` in `next.config.ts`, which
-   tells Next to leave them alone rather than trying to rebundle them.
-   Re-verified with a real generated PDF after the fix.
+   resolution at runtime, not a typo. Fixed by adding `pdf-parse` to
+   `serverExternalPackages` in `next.config.ts`, which tells Next to leave
+   it alone rather than trying to rebundle it. Re-verified with a real
+   generated PDF after the fix.
+4. **`better-sqlite3` failed to install on Windows.** It requires
+   compiling a native C++ addon via `node-gyp`, which needs a correctly
+   configured Visual Studio Build Tools installation with a matching
+   Windows SDK version — a genuinely common source of `npm install`
+   failures on Windows that has nothing to do with this project's code
+   (the exact error, `MSB8036: Windows SDK version ... was not found`, is
+   one of the most common node-gyp failure modes on Windows generally).
+   Rather than asking for a Windows build-toolchain fix, switched the
+   database driver to Node's own built-in `node:sqlite` module (stable
+   enough for this since Node 22.5, no native compilation on any
+   platform). Verified the swap didn't change behavior by re-running the
+   full API test suite (persistence, FNOL intake, rules CRUD, dashboard
+   aggregates) against the new driver and confirming identical results.
 
 ## What's still a documented stand-in
 
@@ -119,7 +132,7 @@ SQLite gives real, durable, zero-account persistence for local development
 and any long-running Node process. It will not reliably persist on Vercel,
 because Vercel's serverless functions have an ephemeral filesystem. The
 repository layer (`src/lib/repo.ts`) is the only thing that talks to the
-database directly — swapping its internals from `better-sqlite3` to
+database directly — swapping its internals from `node:sqlite` to
 Supabase Postgres (schema already mirrored in `supabase/schema.sql`) is a
 contained change, not a rewrite, when it's time to deploy with real
 persistence.

@@ -1,7 +1,8 @@
--- SQLite schema for local development (better-sqlite3). Mirrors
--- supabase/schema.sql conceptually but in SQLite dialect. This is what
--- actually runs when you do `npm run dev` in VS Code — real persistence,
--- real file on disk at data/claimops.db, no cloud account needed.
+-- SQLite schema for local development (Node's built-in node:sqlite module —
+-- no native compilation needed on any platform). Mirrors supabase/schema.sql
+-- conceptually but in SQLite dialect. This is what actually runs when you do
+-- `npm run dev` — real persistence, real file on disk at data/claimops.db,
+-- no cloud account needed.
 --
 -- IMPORTANT — read before deploying: this file-based DB works for local
 -- dev and for a normal long-running Node server (e.g. a VPS, Railway,

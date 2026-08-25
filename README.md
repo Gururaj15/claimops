@@ -22,9 +22,11 @@ if you want it — this README describes what actually exists today.
   rows. See `src/lib/fraud-model.ts` for the full explanation, including a
   real bug (XGBoost's `base_score` intercept) that was caught and fixed
   during that verification, not assumed away.
-- **A real database.** SQLite, actual file on disk at `data/claimops.db`.
-  Approve a claim, refresh the page, restart the dev server entirely — the
-  status holds. Verified via direct API testing, not just "should work."
+- **A real database.** Node's built-in SQLite (`node:sqlite`, no native
+  compilation needed on any platform), actual file on disk at
+  `data/claimops.db`. Approve a claim, refresh the page, restart the dev
+  server entirely — the status holds. Verified via direct API testing, not
+  just "should work."
 - **A real intake pipeline.** `POST /api/claims` (and its CSV/webhook
   variants) runs a claim through fraud scoring → coverage retrieval → rules
   engine → smart assignment, server-side, writing a genuine audit trail to
@@ -70,6 +72,13 @@ if you want it — this README describes what actually exists today.
   cloud account and billing, which is a decision for you to make, not
   something to fake.
 
+## Requirements
+
+**Node.js 22.5 or newer** (uses Node's built-in `node:sqlite` — no native
+build toolchain, no Python/Visual-Studio-Build-Tools setup required on any
+platform, including Windows). Check your version with `node -v`; if it's
+older, update Node first.
+
 ## Important: SQLite works locally, not on Vercel
 
 `npm run dev` (or any long-running Node process — a VPS, Railway, Render)
@@ -77,7 +86,7 @@ gets real, durable persistence from the SQLite file. **Vercel's serverless
 functions have an ephemeral filesystem** — writes can vanish between
 requests, so this will not reliably persist if deployed to Vercel as-is.
 To deploy with real persistence there, migrate `src/lib/repo.ts`'s driver
-from `better-sqlite3` to Postgres (Supabase free tier) using
+from `node:sqlite` to Postgres (Supabase free tier) using
 `supabase/schema.sql`, which mirrors `src/lib/db/schema.sql`. This is a
 contained swap (one file's internals), not a rewrite, because everything
 else calls the repository functions, not the SQLite client directly.
@@ -112,12 +121,17 @@ python3 scripts/train_xgb_fraud_model.py
 
 ## Stack
 
-Next.js 16 (TypeScript, App Router) + Tailwind + Recharts. `better-sqlite3`
-for local persistence, `pdf-parse` for real PDF text extraction (both
-marked `serverExternalPackages` in `next.config.ts` — a real bundler
-incompatibility with Turbopack was hit and fixed during development, see
-that file's comments). XGBoost/scikit-learn/shap (Python) for offline model
-training, exported to JSON and run in pure TypeScript at inference time.
+Next.js 16 (TypeScript, App Router) + Tailwind + Recharts. `node:sqlite`
+(Node's built-in SQLite module — this project originally used
+`better-sqlite3`, which requires compiling a native addon and failed on
+Windows with a Visual Studio/Windows SDK mismatch during testing; switched
+to the built-in module specifically to remove that whole class of
+cross-platform setup friction) for local persistence, `pdf-parse` for real
+PDF text extraction (marked `serverExternalPackages` in `next.config.ts` —
+a real bundler incompatibility with Turbopack was hit and fixed during
+development, see that file's comments). XGBoost/scikit-learn/shap (Python)
+for offline model training, exported to JSON and run in pure TypeScript at
+inference time.
 
 ## Docs
 
