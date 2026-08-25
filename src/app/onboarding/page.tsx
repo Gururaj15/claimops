@@ -21,6 +21,40 @@ export default function OnboardingPage() {
   const [approved, setApproved] = useState<Record<string, boolean>>(
     Object.fromEntries(SAMPLE_SCHEMA_MAPPING.map((m) => [m.sourceField, true]))
   );
+  const [submitting, setSubmitting] = useState(false);
+  const [createdOrgId, setCreatedOrgId] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+
+  async function goLive() {
+    setSubmitting(true);
+    setApiError(null);
+    try {
+      const res = await fetch("/api/organizations", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: programName,
+          line_of_business: line,
+          sla_hours: slaHours,
+          fraud_threshold: fraudThreshold,
+          high_value_threshold: 25000,
+          required_documents: ["Invoice", "Photos", "Policy"],
+          claims_source: claimsSource,
+          policy_source: policySource,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setApiError(JSON.stringify(data.error));
+      } else {
+        setCreatedOrgId(data.organization.id);
+      }
+    } catch {
+      setApiError("Network error — is the dev server running?");
+    }
+    setSubmitting(false);
+    setStep(3);
+  }
 
   return (
     <AppShell>
@@ -196,7 +230,7 @@ export default function OnboardingPage() {
                 </div>
               ))}
             </div>
-            <StepFooter onBack={() => setStep(1)} onNext={() => setStep(3)} />
+            <StepFooter onBack={() => setStep(1)} onNext={goLive} nextLabel={submitting ? "Creating program…" : "Create program & go live"} />
           </Card>
         )}
 
@@ -205,40 +239,43 @@ export default function OnboardingPage() {
             <div className="flex items-center gap-2 mb-4">
               <Check size={18} className="text-teal" />
               <h2 className="font-display font-semibold">
-                {programName} is configured
+                {programName} is live
               </h2>
             </div>
-            <div className="grid sm:grid-cols-2 gap-4 text-sm">
-              <SummaryRow label="Line of business" value={line} />
-              <SummaryRow label="SLA target" value={`${slaHours} hours`} />
-              <SummaryRow
-                label="Fraud review threshold"
-                value={`${Math.round(fraudThreshold * 100)}%`}
-              />
-              <SummaryRow label="Claims source" value={claimsSource} />
-              <SummaryRow label="Policy source" value={policySource} />
-              <SummaryRow
-                label="Fields mapped"
-                value={`${
-                  Object.values(approved).filter(Boolean).length
-                } / ${SAMPLE_SCHEMA_MAPPING.length} approved`}
-              />
-            </div>
-            <p className="text-sm text-ink-muted mt-6 leading-relaxed">
-              In production this writes a new row to <code className="font-mono text-xs bg-surface-sunken px-1 py-0.5 rounded">organizations</code>,
-              persists approved mappings, and the program starts receiving
-              claims immediately with its own rules and SLA — no redeploy.
-              Acme Insurance and Voyage Travel in the Claims Queue went through
-              exactly this flow.
-            </p>
-            <div className="mt-6 flex gap-3">
-              <a href="/adjuster?org=org_acme" className="btn-primary">
-                See a live tenant instead
-              </a>
-              <button onClick={() => setStep(0)} className="btn-secondary">
-                Start another program
-              </button>
-            </div>
+            {createdOrgId ? (
+              <>
+                <div className="grid sm:grid-cols-2 gap-4 text-sm">
+                  <SummaryRow label="Organization ID" value={createdOrgId} />
+                  <SummaryRow label="Line of business" value={line} />
+                  <SummaryRow label="SLA target" value={`${slaHours} hours`} />
+                  <SummaryRow
+                    label="Fraud review threshold"
+                    value={`${Math.round(fraudThreshold * 100)}%`}
+                  />
+                  <SummaryRow label="Claims source" value={claimsSource} />
+                  <SummaryRow label="Policy source" value={policySource} />
+                </div>
+                <p className="text-sm text-ink-muted mt-6 leading-relaxed">
+                  This actually created a new row in the <code className="font-mono text-xs bg-surface-sunken px-1 py-0.5 rounded">organizations</code> table
+                  via <code className="font-mono text-xs bg-surface-sunken px-1 py-0.5 rounded">POST /api/organizations</code> — it&apos;s a real
+                  tenant now. It has no rules or claims yet; add rules on the Rules page, then submit or import claims and
+                  they&apos;ll run through the same pipeline as every other tenant.
+                </p>
+                <div className="mt-6 flex gap-3 flex-wrap">
+                  <a href={`/rules?org=${createdOrgId}`} className="btn-primary">
+                    Configure rules for {programName}
+                  </a>
+                  <a href={`/adjuster/new?org=${createdOrgId}`} className="btn-secondary">
+                    Submit a test claim
+                  </a>
+                  <button onClick={() => { setStep(0); setCreatedOrgId(null); }} className="btn-secondary">
+                    Start another program
+                  </button>
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-red">{apiError ?? "Something went wrong creating the program."}</p>
+            )}
           </Card>
         )}
       </div>
@@ -300,9 +337,11 @@ function SummaryRow({ label, value }: { label: string; value: string }) {
 function StepFooter({
   onBack,
   onNext,
+  nextLabel = "Continue",
 }: {
   onBack?: () => void;
   onNext: () => void;
+  nextLabel?: string;
 }) {
   return (
     <div className="flex justify-between mt-6 pt-4 border-t border-border">
@@ -314,7 +353,7 @@ function StepFooter({
         <span />
       )}
       <button onClick={onNext} className="btn-primary">
-        Continue
+        {nextLabel}
       </button>
     </div>
   );

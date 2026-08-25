@@ -95,4 +95,6 @@ export type Claim = {
   severity: "low" | "medium" | "high";
   created_at: string;
   sla_hours: number;
+  fraud_score: number | null;
+  human_review_required: boolean;
 };

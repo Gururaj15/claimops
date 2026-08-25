@@ -1,5 +1,4 @@
 import Link from "next/link";
-import { ORGANIZATIONS } from "@/lib/seed-data";
 import { Card } from "@/components/ui";
 
 const PIPELINE = [
@@ -36,7 +35,6 @@ const PERSONAS = [
 ];
 
 export default function Home() {
-  const defaultOrg = ORGANIZATIONS[0].id;
   return (
     <div>
       <section className="bg-navy text-white">
@@ -63,7 +61,7 @@ export default function Home() {
                 Walk through onboarding
               </Link>
               <Link
-                href={`/adjuster?org=${defaultOrg}`}
+                href="/adjuster"
                 className="bg-white/10 text-white px-5 py-2.5 rounded-md font-medium text-sm hover:bg-white/15 transition-colors border border-white/20"
               >
                 See the claims queue
@@ -111,7 +109,7 @@ export default function Home() {
                 {p.description}
               </p>
               <Link
-                href={p.href === "/onboarding" ? p.href : `${p.href}?org=${defaultOrg}`}
+                href={p.href}
                 className="mt-4 text-sm font-medium text-teal hover:underline"
               >
                 {p.cta} →
