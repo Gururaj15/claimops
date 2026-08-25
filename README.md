@@ -8,7 +8,7 @@ Built as a portfolio project for Forward Deployed Engineer roles at claims-tech 
 
 **Live dashboard:** https://claimops-xi.vercel.app/
 
-**Write-up:** [I Built a Full Claims Operations Platform From Scratch ]([https://medium.com/@gururajst23/catching-the-denial-before-it-happens-inside-msk-pulse-5e56a314dccf](https://medium.com/@gururajst23/i-built-a-full-claims-operations-platform-from-scratch-real-fraud-model-real-database-real-bugs-95fa285b297c?sharedUserId=gururajst23))
+**Write-up:** [I Built a Full Claims Operations Platform From Scratch ](https://medium.com/@gururajst23/i-built-a-full-claims-operations-platform-from-scratch-real-fraud-model-real-database-real-bugs-95fa285b297c?sharedUserId=gururajst23)
 
 ## Architecture
 
