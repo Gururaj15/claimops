@@ -5,6 +5,7 @@ A multi-tenant claims operations platform. It onboards a new insurance program, 
 Built as a portfolio project for Forward Deployed Engineer roles at claims-tech companies.
 
 ![ClaimOps homepage](docs/screenshots/homepage.png)
+**Live dashboard:** https://claimops-xi.vercel.app/
 
 ## Architecture
 
